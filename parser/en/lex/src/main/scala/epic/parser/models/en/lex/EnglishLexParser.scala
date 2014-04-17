@@ -6,5 +6,3 @@ object EnglishLexParser extends epic.models.ClassPathModelLoader[epic.parser.Par
   class Loader() extends DelegatingLoader(this) with ParserModelLoader
 }
 
-
-

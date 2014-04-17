@@ -64,14 +64,21 @@ object EpicBuild extends Build {
 
   val modelsURL = "http://www.scalanlp.org/resources/"
 
-  def downloadModel(suffix: String) = webResourceSettings ++ Seq(webResources ++= Map(suffix -> (s"$modelsURL/$suffix")),resourceGenerators in Compile <+= resolveWebResources, managedResourceDirectories in Compile <+= webResourcesBase)
+  def downloadModel(suffix: String) = {
+    webResourceSettings ++ Seq(webResourcesBase <<= resourceManaged { f => file(f.toString)},
+                               webResources ++= Map(suffix -> (s"$modelsURL/$suffix")),
+                               resourceGenerators in Compile <+= resolveWebResources,
+                               (managedResourceDirectories in Compile <+= webResourcesBase),
+                               (managedResourceDirectories in Compile) ~= { d => println(d); d},
+                               unmanagedClasspath in Runtime <+= (webResourcesBase) map { bd => Attributed.blank(bd) })
+  }
 
   //
   // subprojects
   //
 
-  lazy val allModels = Project("epic-all-models", file("."), settings = buildSettings) aggregate (epicParserLexEnglish, epicModelCore, epicParserSpanEnglish) dependsOn (epicParserLexEnglish, epicParserSpanEnglish, epicModelCore)
-  lazy val epicParserLexEnglish = Project("epic-parser-en-lex", file("parser/en/lex"), settings =  buildSettings ++ Seq (libraryDependencies ++= deps) ++ downloadModel("epic/parser/models/en/lex/model.ser.gz")) dependsOn (epicModelCore)
+  lazy val allModels = Project("epic-all-models", file("."), settings = buildSettings) aggregate (epicModelCore, epicParserSpanEnglish) dependsOn (epicParserSpanEnglish, epicModelCore)
+  //lazy val epicParserLexEnglish = Project("epic-parser-en-lex", file("parser/en/lex"), settings =  buildSettings ++ Seq (libraryDependencies ++= deps) ++ downloadModel("epic/parser/models/en/lex/model.ser.gz")) dependsOn (epicModelCore)
   lazy val epicParserSpanEnglish = Project("epic-parser-en-span", file("parser/en/span"), settings =  buildSettings ++ Seq (libraryDependencies ++= deps)  ++ downloadModel("epic/parser/models/en/span/model.ser.gz")) dependsOn (epicModelCore)
   lazy val epicModelCore = Project("epic-models-core", file("core"), settings =  buildSettings ++ Seq (libraryDependencies ++= deps))
 }
