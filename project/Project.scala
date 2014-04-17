@@ -1,5 +1,6 @@
 import sbt._
 import Keys._
+import com.github.mkroli.webresources._
 
 
 object BuildSettings {
@@ -55,18 +56,23 @@ object BuildSettings {
 
 object EpicBuild extends Build {
   import BuildSettings._
+  import WebResources.{buildSettings => _, _}
 
   val epic = "org.scalanlp" %% "epic" % "0.1-SNAPSHOT"
 
   val deps = Seq(epic)
+
+  val modelsURL = "http://www.scalanlp.org/resources/"
+
+  def downloadModel(suffix: String) = webResourceSettings ++ Seq(webResources ++= Map(suffix -> (s"$modelsURL/$suffix")),resourceGenerators in Compile <+= resolveWebResources, managedResourceDirectories in Compile <+= webResourcesBase)
 
   //
   // subprojects
   //
 
   lazy val allModels = Project("epic-all-models", file("."), settings = buildSettings) aggregate (epicParserLexEnglish, epicModelCore, epicParserSpanEnglish) dependsOn (epicParserLexEnglish, epicParserSpanEnglish, epicModelCore)
-  lazy val epicParserLexEnglish = Project("epic-parser-en-lex", file("parser/en/lex"), settings =  buildSettings ++ Seq (libraryDependencies ++= deps)) dependsOn (epicModelCore)
-  lazy val epicParserSpanEnglish = Project("epic-parser-en-span", file("parser/en/span"), settings =  buildSettings ++ Seq (libraryDependencies ++= deps)) dependsOn (epicModelCore)
+  lazy val epicParserLexEnglish = Project("epic-parser-en-lex", file("parser/en/lex"), settings =  buildSettings ++ Seq (libraryDependencies ++= deps) ++ downloadModel("epic/parser/models/en/lex/model.ser.gz")) dependsOn (epicModelCore)
+  lazy val epicParserSpanEnglish = Project("epic-parser-en-span", file("parser/en/span"), settings =  buildSettings ++ Seq (libraryDependencies ++= deps)  ++ downloadModel("epic/parser/models/en/span/model.ser.gz")) dependsOn (epicModelCore)
   lazy val epicModelCore = Project("epic-models-core", file("core"), settings =  buildSettings ++ Seq (libraryDependencies ++= deps))
 }
 
