@@ -8,13 +8,16 @@ import java.util.zip.GZIPInputStream
 *
 * @author dlwh
 **/
-trait ModelLoader[+T] {
+trait ModelLoader[+T] { outer =>
   def load():T
+
+  def capabilities:Array[String]
+
 }
 
-abstract class ClassPathModelLoader[T](modelPath: String = "model.ser.gz") extends ModelLoader[T] {
+abstract class ClassPathModelLoader[+T](modelPath: String = "model.ser.gz") extends ModelLoader[T] {
   def load() = {
-    val input = this.getClass.getResourceAsStream("model.ser.gz")
+    val input = this.getClass.getResourceAsStream(modelPath)
     val gzipin = new ObjectInputStream(new GZIPInputStream(new BufferedInputStream(input)))
     try {
       gzipin.readObject().asInstanceOf[T]
@@ -22,4 +25,12 @@ abstract class ClassPathModelLoader[T](modelPath: String = "model.ser.gz") exten
       gzipin.close()
     }
   }
+}
+
+
+/* this class exists as a hack to get around limitations in service loader*/
+class DelegatingLoader[+T](outer: ModelLoader[T]) extends ModelLoader[T] {
+  def load() = outer.load()
+  def capabilities = outer.capabilities
+
 }
