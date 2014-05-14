@@ -1,6 +1,6 @@
 package epic.models
 
-trait LanguageSpecific[+T] extends ModelLoader[T] {
+trait LanguageSpecific { this:ModelLoader[_] =>
 
   def language: String
 
@@ -8,6 +8,6 @@ trait LanguageSpecific[+T] extends ModelLoader[T] {
 }
 
 
-trait EnglishModel[+T] extends LanguageSpecific[T] {
+trait EnglishModel extends LanguageSpecific { this:ModelLoader[_] =>
   def language = "en"
 }
