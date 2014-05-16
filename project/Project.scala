@@ -62,19 +62,36 @@ object EpicBuild extends Build {
   val deps = Seq(epic)
 
 
+  val parserLanguages = Seq("de", "en", "eu", "fr", "hu", "ko", "pl", "sv")
+
+  lazy val parserModels = parserLanguages.map( lang =>
+    Project(s"epic-parser-$lang-span",
+    file(s"parser/$lang/span"),
+    settings =  buildSettings
+      ++ Seq (libraryDependencies ++= deps)
+      ++ ModelGenerator.parserLoader(lang, "Span")) dependsOn (epicModelCore)
+
+  )
+
 
 
   //
   // subprojects
   //
 
-  lazy val allModels = Project("epic-all-models", file("."), settings = buildSettings) aggregate (epicModelCore, epicParserSpanEnglish) dependsOn (epicParserSpanEnglish, epicModelCore)
-  //lazy val epicParserLexEnglish = Project("epic-parser-en-lex", file("parser/en/lex"), settings =  buildSettings ++ Seq (libraryDependencies ++= deps) ++ downloadModel("epic/parser/models/en/lex/model.ser.gz")) dependsOn (epicModelCore)
-  lazy val epicParserSpanEnglish = Project("epic-parser-en-span",
-    file("parser/en/span"),
-    settings =  buildSettings
-      ++ Seq (libraryDependencies ++= deps)
-      ++ ModelGenerator.parserLoader("en", "Span")) dependsOn (epicModelCore)
+  lazy val allModels = {
+    val p = Project("epic-all-models", file("."), settings = buildSettings).aggregate ( allProjectReferences:_*)
+    // stupid implicits
+    allProjectReferences.foldLeft(p)(_.dependsOn(_))
+
+  }
+
+  lazy val allProjects = Seq(epicModelCore) ++ parserModels
+  lazy val allProjectReferences = (Seq(epicModelCore) ++ parserModels).map(Project.projectToRef)
+
+
+  override def projects: Seq[Project] = allProjects :+ allModels
+
   lazy val epicModelCore = Project("epic-models-core", file("core"), settings =  buildSettings ++ Seq (libraryDependencies ++= deps))
 }
 
