@@ -74,7 +74,6 @@ object EpicBuild extends Build {
   )
 
 
-
   //
   // subprojects
   //
@@ -83,7 +82,6 @@ object EpicBuild extends Build {
     val p = Project("epic-all-models", file("."), settings = buildSettings).aggregate ( allProjectReferences:_*)
     // stupid implicits
     allProjectReferences.foldLeft(p)(_.dependsOn(_))
-
   }
 
   lazy val allProjects = Seq(epicModelCore) ++ parserModels
@@ -96,19 +94,10 @@ object EpicBuild extends Build {
 }
 
 object ModelGenerator {
-  import WebResources.{buildSettings => _, _}
-
 
   val modelsURL = "http://www.scalanlp.org/resources/"
 
-  def downloadModel(suffix: String) = {
-    webResourceSettings ++ Seq(webResourcesBase <<= resourceManaged { f => file(f.toString)},
-      webResources ++= Map(suffix -> (s"$modelsURL/$suffix")),
-      resourceGenerators in Compile <+= resolveWebResources,
-      (managedResourceDirectories in Compile <+= webResourcesBase),
-      (managedResourceDirectories in Compile) ~= { d => println(d); d},
-      unmanagedClasspath in Runtime <+= (webResourcesBase) map { bd => Attributed.blank(bd) })
-  }
+
 
   def generateModelLoader(lang2letter: String, model: String, system: String, systemClass: String, imports: String*) = {
     val locale = new java.util.Locale(lang2letter)
@@ -134,17 +123,25 @@ object ModelGenerator {
     }
 
 
-    val genRes: Def.Setting[Seq[Task[Seq[File]]]] = resourceGenerators in Compile <+= (resourceManaged in Compile) map { case  resPath =>
+    val genRes: Def.Setting[Seq[Task[Seq[File]]]] = resourceGenerators in Compile <+= (resourceManaged in Compile, streams) map { case  (resPath, s) =>
 
-      val metainfPath =new File(resPath.getParentFile, s"META-INF/services/epic.models.${system}ModelLoader")
+      val metainfPath =new File(resPath, s"META-INF/services/epic.models.${system}ModelLoader")
       val metainfSource = s"epic.${system.toLowerCase}.models.${lang2letter}.${model.toLowerCase}.${lang}${model}${system}$$Loader"
       IO.write(metainfPath, metainfSource)
 
-      Seq(metainfPath)
+      val modelPath = s"epic/${system.toLowerCase}/models/${lang2letter}/${model.toLowerCase}/model.ser.gz"
+      val remoteFile = new URL(modelsURL + modelPath)
+      val localFile = new File(resPath, modelPath)
+      if(!localFile.exists) {
+        s.log.info(s"Downloading... $remoteFile $localFile")
+        IO.download(remoteFile, localFile)
+      }
+
+      Seq(metainfPath, localFile)
+//      Seq.empty[File]
     }
 
-    val modelPath = s"epic/${system.toLowerCase}/models/${lang2letter}/${model.toLowerCase}/model.ser.gz"
-    Seq(genSource, genRes) ++ downloadModel(modelPath)
+    Seq(genSource, genRes)
   }
 
   def parserLoader(lang2letter: String, model: String = "Span") = {
