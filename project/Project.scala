@@ -6,7 +6,7 @@ import com.github.mkroli.webresources._
 object BuildSettings {
   val buildOrganization = "org.scalanlp"
   val buildScalaVersion = "2.10.3"
-  val buildVersion = "0.1-SNAPSHOT"
+  val buildVersion = "0.1"
 
 
   val buildSettings = Defaults.defaultSettings ++ Seq (
@@ -57,7 +57,7 @@ object BuildSettings {
 object EpicBuild extends Build {
   import BuildSettings._
 
-  val epic = "org.scalanlp" %% "epic" % "0.1-SNAPSHOT"
+  val epic = "org.scalanlp" %% "epic" % "0.1"
 
   val deps = Seq(epic)
 
