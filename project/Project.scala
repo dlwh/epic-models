@@ -63,16 +63,36 @@ object EpicBuild extends Build {
 
 
   val parserLanguages = Seq("de", "en", "eu", "fr", "hu", "ko", "pl", "sv")
+  val posLanguages =    Seq("de", "en", "eu", "fr", "hu",       "pl", "sv")
+  val nerLanguages =    Seq("en")
 
   lazy val parserModels = parserLanguages.map( lang =>
     Project(s"epic-parser-$lang-span",
     file(s"parser/$lang/span"),
     settings =  buildSettings
       ++ Seq (libraryDependencies ++= deps)
-      ++ ModelGenerator.parserLoader(lang, "Span")) dependsOn (epicModelCore)
+      ++ ModelGenerator.parserLoader(lang, "Span")) 
 
   )
 
+
+  lazy val posModels = posLanguages.map( lang =>
+    Project(s"epic-pos-$lang",
+    file(s"pos/$lang/span"),
+    settings =  buildSettings
+      ++ Seq (libraryDependencies ++= deps)
+      ++ ModelGenerator.posLoader(lang, ""))
+
+  )
+
+  lazy val nerModels = nerLanguages.map( lang =>
+    Project(s"epic-ner-$lang-conll",
+    file(s"ner/$lang/conll"),
+    settings =  buildSettings
+      ++ Seq (libraryDependencies ++= deps)
+      ++ ModelGenerator.nerLoader(lang, "Conll"))
+
+  )
 
   //
   // subprojects
@@ -84,13 +104,13 @@ object EpicBuild extends Build {
     allProjectReferences.foldLeft(p)(_.dependsOn(_))
   }
 
-  lazy val allProjects = Seq(epicModelCore) ++ parserModels
-  lazy val allProjectReferences = (Seq(epicModelCore) ++ parserModels).map(Project.projectToRef)
+  lazy val allProjects = parserModels ++ posModels ++ nerModels
+  lazy val allProjectReferences = allProjects.map(Project.projectToRef)
 
 
   override def projects: Seq[Project] = allProjects :+ allModels
 
-  lazy val epicModelCore = Project("epic-models-core", file("core"), settings =  buildSettings ++ Seq (libraryDependencies ++= deps))
+  //lazy val epicModelCore = Project("epic-models-core", file("core"), settings =  buildSettings ++ Seq (libraryDependencies ++= deps))
 }
 
 object ModelGenerator {
@@ -99,13 +119,14 @@ object ModelGenerator {
 
 
 
-  def generateModelLoader(lang2letter: String, model: String, system: String, systemClass: String, imports: String*) = {
+  def generateModelLoader(lang2letter: String, model: String, kind: String, system: String, systemClass: String, imports: String*) = {
     val locale = new java.util.Locale(lang2letter)
     val lang = locale.getDisplayLanguage(java.util.Locale.US)
+    val pack = s"package epic.${kind.toLowerCase}.models.${lang2letter}${if(model.nonEmpty) '.' + model.toLowerCase else ""}"
     val genSource: Def.Setting[Seq[Task[Seq[File]]]] = sourceGenerators in Compile <+= sourceManaged in Compile map { case srcPath =>
-      val loaderPath = new File(srcPath, s"epic/${system.toLowerCase}/models/${lang2letter}/${model.toLowerCase}/${lang}${model}${system}.scala")
+      val loaderPath = new File(srcPath, s"epic/${kind.toLowerCase}/models/${lang2letter}/${model.toLowerCase}/${lang}${model}${system}.scala")
       val loaderSource = s"""
-    package epic.${system.toLowerCase}.models.${lang2letter}.${model.toLowerCase}
+      $pack
 
     import epic.models._
     ${imports.mkString("\n")}
@@ -126,10 +147,10 @@ object ModelGenerator {
     val genRes: Def.Setting[Seq[Task[Seq[File]]]] = resourceGenerators in Compile <+= (resourceManaged in Compile, streams) map { case  (resPath, s) =>
 
       val metainfPath =new File(resPath, s"META-INF/services/epic.models.${system}ModelLoader")
-      val metainfSource = s"epic.${system.toLowerCase}.models.${lang2letter}.${model.toLowerCase}.${lang}${model}${system}$$Loader"
+      val metainfSource = s"$pack.${lang}${model}${system}$$Loader"
       IO.write(metainfPath, metainfSource)
 
-      val modelPath = s"epic/${system.toLowerCase}/models/${lang2letter}/${model.toLowerCase}/model.ser.gz"
+      val modelPath = s"epic/${kind.toLowerCase}/models/${lang2letter}/${if(model.nonEmpty) model.toLowerCase else system.toLowerCase}/model.ser.gz"
       val remoteFile = new URL(modelsURL + modelPath)
       val localFile = new File(resPath, modelPath)
       if(!localFile.exists) {
@@ -145,12 +166,17 @@ object ModelGenerator {
   }
 
   def parserLoader(lang2letter: String, model: String = "Span") = {
-    generateModelLoader(lang2letter, model, "Parser", "epic.parser.Parser[AnnotatedLabel, String]", "import epic.trees._")
+    generateModelLoader(lang2letter, model, "Parser", "Parser", "epic.parser.Parser[AnnotatedLabel, String]", "import epic.trees._")
   }
 
 
-  def nerLoader(lang2letter: String, model: String = "Conll")(srcPath: File, resourcePath: File) = {
-    generateModelLoader(lang2letter, model, "NER", "epic.sequences.SemiCRF[String, String]", "import epic.sequences._")
+  def nerLoader(lang2letter: String, model: String = "Conll") = {
+    generateModelLoader(lang2letter, model, "Sequences", "Ner", "epic.sequences.SemiCRF[Any, String]", "import epic.sequences._")
+  }
+
+  
+  def posLoader(lang2letter: String, model: String = "") = {
+    generateModelLoader(lang2letter, model, "Sequences", "PosTag", "epic.sequences.CRF[AnnotatedLabel, String]", "import epic.sequences._", "import epic.trees._")
   }
 
 }
