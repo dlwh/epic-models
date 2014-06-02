@@ -6,7 +6,7 @@ import com.github.mkroli.webresources._
 object BuildSettings {
   val buildOrganization = "org.scalanlp"
   val buildScalaVersion = "2.10.3"
-  val buildVersion = "0.1"
+  val buildVersion = "0.1.1"
 
 
   val buildSettings = Defaults.defaultSettings ++ Seq (
@@ -122,11 +122,11 @@ object ModelGenerator {
   def generateModelLoader(lang2letter: String, model: String, kind: String, system: String, systemClass: String, imports: String*) = {
     val locale = new java.util.Locale(lang2letter)
     val lang = locale.getDisplayLanguage(java.util.Locale.US)
-    val pack = s"package epic.${kind.toLowerCase}.models.${lang2letter}${if(model.nonEmpty) '.' + model.toLowerCase else ""}"
+    val pack = s"epic.${kind.toLowerCase}.models.${lang2letter}${if(model.nonEmpty) '.' + model.toLowerCase else ""}"
     val genSource: Def.Setting[Seq[Task[Seq[File]]]] = sourceGenerators in Compile <+= sourceManaged in Compile map { case srcPath =>
       val loaderPath = new File(srcPath, s"epic/${kind.toLowerCase}/models/${lang2letter}/${model.toLowerCase}/${lang}${model}${system}.scala")
       val loaderSource = s"""
-      $pack
+      package $pack
 
     import epic.models._
     ${imports.mkString("\n")}
