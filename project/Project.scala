@@ -6,7 +6,7 @@ import com.github.mkroli.webresources._
 object BuildSettings {
   val buildOrganization = "org.scalanlp"
   val buildScalaVersion = "2.10.3"
-  val buildVersion = "0.1.1"
+  val buildVersion = "2014.6.2-SNAPSHOT"
 
 
   val buildSettings = Defaults.defaultSettings ++ Seq (
@@ -17,7 +17,7 @@ object BuildSettings {
       "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
       "FormReturn" at "http://maven.formreturn.com/repository/"
     ),
-    crossScalaVersions := Seq("2.10.2"),
+    crossScalaVersions := Seq("2.10.3"),
   publishMavenStyle := true,
   publishTo <<= version { (v: String) =>
     val nexus = "https://oss.sonatype.org/"
@@ -57,7 +57,7 @@ object BuildSettings {
 object EpicBuild extends Build {
   import BuildSettings._
 
-  val epic = "org.scalanlp" %% "epic" % "0.1"
+  val epic = "org.scalanlp" %% "epic" % "0.2-SNAPSHOT"
 
   val deps = Seq(epic)
 
