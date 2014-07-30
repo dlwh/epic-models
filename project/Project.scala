@@ -5,8 +5,8 @@ import com.github.mkroli.webresources._
 
 object BuildSettings {
   val buildOrganization = "org.scalanlp"
-  val buildScalaVersion = "2.10.3"
-  val buildVersion = "2014.6.3-SNAPSHOT"
+  val buildScalaVersion = "2.11.2"
+  val buildVersion = "2014.7.29-SNAPSHOT"
 
 
   val buildSettings = Defaults.defaultSettings ++ Seq (
@@ -63,7 +63,7 @@ object EpicBuild extends Build {
 
 
   val parserLanguages = Seq("de", "en", "eu", "fr", "hu", "ko", "pl", "sv")
-  val posLanguages =    Seq("de", "en", "eu", "fr", "hu",       "pl", "sv")
+  val posLanguages =    Seq.empty//Seq("de", "en", "eu", "fr", "hu",       "pl", "sv")
   val nerLanguages =    Seq("en")
 
   lazy val parserModels = parserLanguages.map( lang =>
