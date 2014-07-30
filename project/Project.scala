@@ -63,7 +63,7 @@ object EpicBuild extends Build {
 
 
   val parserLanguages = Seq("de", "en", "eu", "fr", "hu", "ko", "pl", "sv")
-  val posLanguages =    Seq.empty//Seq("de", "en", "eu", "fr", "hu",       "pl", "sv")
+  val posLanguages =   Seq("de", "en", "eu", "fr", "hu",       "pl", "sv")
   val nerLanguages =    Seq("en")
 
   lazy val parserModels = parserLanguages.map( lang =>
