@@ -1,12 +1,11 @@
+import sbt.Keys._
 import sbt._
-import Keys._
-import com.github.mkroli.webresources._
 
 
 object BuildSettings {
   val buildOrganization = "org.scalanlp"
   val buildScalaVersion = "2.11.2"
-  val buildVersion = "2014.7.29-SNAPSHOT"
+  val buildVersion = "2014.9.15"
 
 
   val buildSettings = Defaults.defaultSettings ++ Seq (
@@ -17,7 +16,7 @@ object BuildSettings {
       "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
       "FormReturn" at "http://maven.formreturn.com/repository/"
     ),
-    crossScalaVersions := Seq("2.10.3"),
+    crossScalaVersions := Seq("2.10.4"),
   publishMavenStyle := true,
   publishTo <<= version { (v: String) =>
     val nexus = "https://oss.sonatype.org/"
@@ -57,7 +56,7 @@ object BuildSettings {
 object EpicBuild extends Build {
   import BuildSettings._
 
-  val epic = "org.scalanlp" %% "epic" % "0.2-SNAPSHOT"
+  val epic = "org.scalanlp" %% "epic" % "0.2"
 
   val deps = Seq(epic)
 
@@ -94,6 +93,7 @@ object EpicBuild extends Build {
 
   )
 
+
   //
   // subprojects
   //
@@ -107,6 +107,10 @@ object EpicBuild extends Build {
   lazy val allProjects = parserModels ++ posModels ++ nerModels
   lazy val allProjectReferences = allProjects.map(Project.projectToRef)
 
+//  lazy val englishModels = {
+//    val p = Project("english", file("bundles/english"), settings = buildSettings).aggregate ( allProjectReferences:_*)
+//    p.foldLeft(parserModels ++ nerModels ++ posModels)
+//  }
 
   override def projects: Seq[Project] = allProjects :+ allModels
 
@@ -144,14 +148,14 @@ object ModelGenerator {
     }
 
 
-    val genRes: Def.Setting[Seq[Task[Seq[File]]]] = resourceGenerators in Compile <+= (resourceManaged in Compile, streams) map { case  (resPath, s) =>
+    val genRes: Def.Setting[Seq[Task[Seq[File]]]] = resourceGenerators in Compile <+= (resourceManaged in Compile, streams, scalaVersion in Compile) map { case  (resPath, s, version) =>
 
       val metainfPath =new File(resPath, s"META-INF/services/epic.models.${system}ModelLoader")
       val metainfSource = s"$pack.${lang}${model}${system}$$Loader"
       IO.write(metainfPath, metainfSource)
 
       val modelPath = s"${pack.replaceAll("[.]","/")}/model.ser.gz"
-      val remoteFile = new URL(modelsURL + modelPath)
+      val remoteFile = new URL(s"$modelsURL/${version.dropRight(2)}/$modelPath")
       val localFile = new File(resPath, modelPath)
       if(!localFile.exists) {
         s.log.info(s"Downloading... $remoteFile $localFile")
