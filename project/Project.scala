@@ -5,7 +5,7 @@ import sbt._
 object BuildSettings {
   val buildOrganization = "org.scalanlp"
   val buildScalaVersion = "2.11.2"
-  val buildVersion = "2014.9.15"
+  val buildVersion = "2014.10.26"
 
 
   val buildSettings = Defaults.defaultSettings ++ Seq (
@@ -16,7 +16,7 @@ object BuildSettings {
       "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
       "FormReturn" at "http://maven.formreturn.com/repository/"
     ),
-    crossScalaVersions := Seq("2.10.4"),
+    crossScalaVersions := Seq("2.11.2", "2.10.4"),
   publishMavenStyle := true,
   publishTo <<= version { (v: String) =>
     val nexus = "https://oss.sonatype.org/"
