@@ -37,8 +37,8 @@ object BuildSettings {
       </license>
     </licenses>
     <scm>
-      <url>git@github.com:dlwh/breeze.git</url>
-      <connection>scm:git:git@github.com:dlwh/breeze.git</connection>
+      <url>git@github.com:dlwh/epic-models.git</url>
+      <connection>scm:git:git@github.com:dlwh/epic-models.git</connection>
     </scm>
     <developers>
       <developer>
@@ -77,7 +77,7 @@ object EpicBuild extends Build {
 
   lazy val posModels = posLanguages.map( lang =>
     Project(s"epic-pos-$lang",
-    file(s"pos/$lang/span"),
+    file(s"pos/$lang"),
     settings =  buildSettings
       ++ Seq (libraryDependencies ++= deps)
       ++ ModelGenerator.posLoader(lang, ""))
@@ -107,14 +107,15 @@ object EpicBuild extends Build {
   lazy val allProjects = parserModels ++ posModels ++ nerModels
   lazy val allProjectReferences = allProjects.map(Project.projectToRef)
 
-//  lazy val englishModels = {
-//    val p = Project("english", file("bundles/english"), settings = buildSettings).aggregate ( allProjectReferences:_*)
-//    p.foldLeft(parserModels ++ nerModels ++ posModels)
-//  }
 
-  override def projects: Seq[Project] = allProjects :+ allModels
+  lazy val englishModels = {
+    val englishProjects = allProjects.filter(p => p.id.contains("-en-") || p.id.endsWith("-en")).map(Project.projectToRef)
+    val p = Project("english", file("english"), settings = buildSettings).aggregate ( englishProjects:_*)
+    (englishProjects).foldLeft(p)(_.dependsOn(_))
+  }
 
-  //lazy val epicModelCore = Project("epic-models-core", file("core"), settings =  buildSettings ++ Seq (libraryDependencies ++= deps))
+  override def projects: Seq[Project] = allProjects :+ englishModels :+  allModels
+
 }
 
 object ModelGenerator {
