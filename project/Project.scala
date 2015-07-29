@@ -4,8 +4,8 @@ import sbt._
 
 object BuildSettings {
   val buildOrganization = "org.scalanlp"
-  val buildScalaVersion = "2.11.2"
-  val buildVersion = "2014.10.26"
+  val buildScalaVersion = "2.11.6"
+  val buildVersion = "2015.7.29-SNAPSHOT"
 
 
   val buildSettings = Defaults.defaultSettings ++ Seq (
@@ -16,7 +16,7 @@ object BuildSettings {
       "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
       "FormReturn" at "http://maven.formreturn.com/repository/"
     ),
-    crossScalaVersions := Seq("2.11.2", "2.10.4"),
+    crossScalaVersions := Seq("2.11.6", "2.10.4"),
   publishMavenStyle := true,
   publishTo <<= version { (v: String) =>
     val nexus = "https://oss.sonatype.org/"
@@ -56,7 +56,7 @@ object BuildSettings {
 object EpicBuild extends Build {
   import BuildSettings._
 
-  val epic = "org.scalanlp" %% "epic" % "0.2"
+  val epic = "org.scalanlp" %% "epic" % "0.4-SNAPSHOT"
 
   val deps = Seq(epic)
 
